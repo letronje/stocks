@@ -10,10 +10,14 @@ class SaxoCSV
 
     rows = CSV.new(File.read(path)).read
 
-    rows.map do |r|
-      next if r[0] == "Instrument"
+    header_row = ["Instrument", "TradeTime", "B/S", "Open/Close", "Amount", "Price", "Traded Value"]
+    start_index = rows.find_index do |row|
+      row[0, 7] == header_row
+    end
 
-      SaxoTransaction.from_csv_row(r).to_transaction(listing)
+    rows[start_index..-1].map do |row|
+      next if row[0] == "Instrument"
+      SaxoTransaction.from_csv_row(row[0, 7]).to_transaction(listing)
     end.compact
   end
 end
@@ -26,7 +30,6 @@ class SaxoTransaction < Hashie::Dash
   property :amount, required: true
   property :price, required: true
   property :traded_value, required: true
-  property :booked_amount, required: true
 
   def self.sanitize_company_name(company_name)
     company_name.gsub(/\(ISIN:.*/, "")
@@ -41,7 +44,6 @@ class SaxoTransaction < Hashie::Dash
       :amount,
       :price,
       :traded_value,
-      :booked_amount,
     ].zip(row).to_h)
   end
 

@@ -5,12 +5,18 @@ class TigerCSV
 
     rows = CSV.new(File.read(path)).read
 
-    rows.map do |row|
-      next if row[0] == "Symbol"
-      next if row[0].blank?
+    header_row = ["", "Symbol", "Date/Time", "Quantity", "T.Price", "C.Price", "Proceeds", "Comm/Fee", "GST", "Realized P/L", "MTM P/L", "Code"]
+    start_index = rows.find_index header_row
+
+    last_index = start_index + rows[(start_index + 1)..-1].find_index do |row|
+      row[0..5] == ["", "Total", nil, nil, nil, nil]
+    end
+
+    rows[start_index..last_index].map do |row|
+      next if row[1] == "Symbol"
       next if row[1].nil?
-      #next if row[0].starts_with?("Total ") || row[0] == "Total"
-      TigerTransaction.from_csv_row(row).to_transaction
+      next if row[1].starts_with? "Total "
+      TigerTransaction.from_csv_row(row[1, 4]).to_transaction
     end.compact
   end
 end
@@ -27,12 +33,7 @@ class TigerTransaction < Hashie::Dash
       :date_and_time,
       :quantity,
       :transaction_price,
-    ].zip([
-      r[0],
-      r[1],
-      r[2],
-      r[3],
-    ]).to_h)
+    ].zip(r).to_h)
   end
 
   def to_transaction
@@ -42,7 +43,7 @@ class TigerTransaction < Hashie::Dash
       type: transaction_type,
       purchase_price: BigDecimal(transaction_price),
       quantity: quantity.to_i,
-      broker: Transaction::Broker::IBKR,
+      broker: Transaction::Broker::TIGER,
     )
   end
 
