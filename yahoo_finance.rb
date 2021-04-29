@@ -32,7 +32,7 @@ OptionParser.new do |opts|
   end
 end.parse!
 
-transactions = SaxoCSV.import(options[:saxo]) + IbkrCSV.import(options[:ibkr]) #+ TigerCSV.import(options[:tiger])
+transactions = SaxoCSV.import(options[:saxo]) + IbkrCSV.import(options[:ibkr]) + TigerCSV.import(options[:tiger])
 
 CSV.open("yahoo_upload.csv", "w") do |csv|
   csv << ["Symbol", "Trade Date", "Purchase Price", "Quantity", "Comment"]
@@ -48,7 +48,7 @@ CSV.open("yahoo_upload.csv", "w") do |csv|
 end
 
 puts "Wrote #{transactions.size} transactions"
-# ap transactions
+ap transactions.size
 
 #
 
