@@ -8,6 +8,7 @@ class Transaction < Hashie::Dash
     IBKR = :ibkr
     TIGER = :tiger
     SAXO = :saxo
+    KRISTAL = :kristal
   end
 
   property :symbol, required: true

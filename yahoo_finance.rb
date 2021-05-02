@@ -17,11 +17,12 @@ require_relative "constants"
 require_relative "saxo"
 require_relative "ibkr"
 require_relative "tiger"
+require_relative "kristalai"
 require_relative "listing"
 
 options = {}
 OptionParser.new do |opts|
-  opts.on("-s", "--saxo path/to/saxo/csv", "Saxo CSV path") do |v|
+  opts.on("--saxo path/to/saxo/csv", "Saxo CSV path") do |v|
     options[:saxo] = v
   end
   opts.on("--ibkr path/to/ibkr/csv", "Saxo CSV path") do |v|
@@ -30,11 +31,15 @@ OptionParser.new do |opts|
   opts.on("--tiger path/to/tiger/csv", "Saxo CSV path") do |v|
     options[:tiger] = v
   end
+  opts.on("--kristal path/to/kristal/csv", "Kristal CSV path") do |v|
+    options[:kristal] = v
+  end
 end.parse!
 
-transactions = SaxoCSV.import(options[:saxo]) + IbkrCSV.import(options[:ibkr]) + TigerCSV.import(options[:tiger])
+transactions = SaxoCSV.import(options[:saxo]) + IbkrCSV.import(options[:ibkr]) + TigerCSV.import(options[:tiger]) + KristalCSV.import(options[:kristal])
 
-CSV.open("yahoo_upload.csv", "w") do |csv|
+output_csv = "yahoo_finance_upload.csv"
+CSV.open(output_csv, "w") do |csv|
   csv << ["Symbol", "Trade Date", "Purchase Price", "Quantity", "Comment"]
   transactions.sort_by(&:trade_date).each do |t|
     csv << [
@@ -47,8 +52,7 @@ CSV.open("yahoo_upload.csv", "w") do |csv|
   end
 end
 
-puts "Wrote #{transactions.size} transactions"
-ap transactions.size
+puts "Wrote #{transactions.size} transactions to #{output_csv}"
 
 #
 
