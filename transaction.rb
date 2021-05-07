@@ -9,6 +9,7 @@ class Transaction < Hashie::Dash
     TIGER = :tiger
     SAXO = :saxo
     KRISTAL = :kristal
+    MOOMOO = :moomoo
   end
 
   property :symbol, required: true

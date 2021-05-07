@@ -18,6 +18,7 @@ require_relative "saxo"
 require_relative "ibkr"
 require_relative "tiger"
 require_relative "kristalai"
+require_relative "moomoo"
 require_relative "listing"
 
 options = {}
@@ -34,9 +35,12 @@ OptionParser.new do |opts|
   opts.on("--kristal path/to/kristal/csv", "Kristal CSV path") do |v|
     options[:kristal] = v
   end
+  opts.on("--moomoo path/to/moomoo/csv", "MooMoo CSV path") do |v|
+    options[:moomoo] = v
+  end
 end.parse!
 
-transactions = SaxoCSV.import(options[:saxo]) + IbkrCSV.import(options[:ibkr]) + TigerCSV.import(options[:tiger]) + KristalCSV.import(options[:kristal])
+transactions = SaxoCSV.import(options[:saxo]) + IbkrCSV.import(options[:ibkr]) + TigerCSV.import(options[:tiger]) + KristalCSV.import(options[:kristal]) + MooMooCSV.import(options[:moomoo])
 
 output_csv = "yahoo_finance_upload.csv"
 CSV.open(output_csv, "w") do |csv|
