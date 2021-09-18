@@ -50,6 +50,7 @@ class Listing
       end
 
       match_ratio = matched.to_f / kw.sum(&:size).to_f
+
       if match_ratio >= 0.6
         if match_ratio > best_match_ratio
           best_match_ratio = match_ratio

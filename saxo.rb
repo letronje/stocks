@@ -6,30 +6,39 @@ class SaxoCSV
     # TODO: if path is directory, import all csv files within
     return [] if path.blank?
 
-    listing = Listing.new("US.json")
+    listing = Listing.new("data/US.json")
 
     rows = CSV.new(File.read(path)).read
 
-    header_row = ["Instrument", "TradeTime", "B/S", "Open/Close", "Amount", "Price", "Traded Value"]
-    start_index = rows.find_index do |row|
-      row[0, 7] == header_row
-    end
+    rows.each.with_index.map do |row, index|
+      next if index.zero?
+      next unless row[5] == "Trade"
 
-    rows[start_index..-1].map do |row|
-      next if row[0] == "Instrument"
-      SaxoTransaction.from_csv_row(row[0, 7]).to_transaction(listing)
+      SaxoTransaction.from_csv_row(
+        [
+          row[0], # trade date
+          row[2], # asset type
+          row[3], # instrument
+          row[5], # transaction type
+          row[6], # event
+          row[9], # amount
+          row[10], # price
+          row[12], # booked_amount_instrument_currency,
+        ]
+      ).to_transaction(listing)
     end.compact
   end
 end
 
 class SaxoTransaction < Hashie::Dash
-  property :instrument, required: true
   property :trade_date, required: true
-  property :buy_sell, required: true
-  property :open_close, required: true
+  property :asset_type, required: true
+  property :instrument, required: true
+  property :transaction_type, required: true
+  property :event, required: true
   property :amount, required: true
   property :price, required: true
-  property :traded_value, required: true
+  property :booked_amount_instrument_currency, required: true
 
   def self.sanitize_company_name(company_name)
     company_name.gsub(/\(ISIN:.*/, "")
@@ -37,33 +46,35 @@ class SaxoTransaction < Hashie::Dash
 
   def self.from_csv_row(row)
     self.new([
-      :instrument,
       :trade_date,
-      :buy_sell,
-      :open_close,
+      :asset_type,
+      :instrument,
+      :transaction_type,
+      :event,
       :amount,
       :price,
-      :traded_value,
+      :booked_amount_instrument_currency,
     ].zip(row).to_h)
   end
 
   def to_transaction(listing)
+    sym = listing.symbol_for_company_name(self.class.sanitize_company_name(instrument))
     Transaction.new(
-      symbol: listing.symbol_for_company_name(self.class.sanitize_company_name(instrument)),
+      symbol: sym,
       trade_date: Date.parse(trade_date),
-      type: transaction_type,
+      type: trans_type,
       purchase_price: BigDecimal(price),
       quantity: amount.to_i,
       broker: Transaction::Broker::SAXO,
     )
   end
 
-  def transaction_type
-    case buy_sell
-    when "Bought"
+  def trans_type
+    case event
+    when "Buy"
       Transaction::Type::BUY
     else
-      raise "oops, unknown buy sell type '#{buy_sell}"
+      raise "oops, unknown event '#{event}"
     end
   end
 end

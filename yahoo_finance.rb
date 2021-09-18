@@ -42,7 +42,12 @@ end.parse!
 
 transactions = SaxoCSV.import(options[:saxo]) + IbkrCSV.import(options[:ibkr]) + TigerCSV.import(options[:tiger]) + KristalCSV.import(options[:kristal]) + MooMooCSV.import(options[:moomoo])
 
-output_csv = "yahoo_finance_upload.csv"
+transactions.each do |t|
+  t.symbol = "SOFI" if t.symbol == "IPOE"
+end
+
+suffix = Time.now.strftime("%Y_%m_%d")
+output_csv = "output/yahoo_finance_upload_#{suffix}.csv"
 CSV.open(output_csv, "w") do |csv|
   csv << ["Symbol", "Trade Date", "Purchase Price", "Quantity", "Comment"]
   transactions.sort_by(&:trade_date).each do |t|
