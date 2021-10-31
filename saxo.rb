@@ -12,6 +12,7 @@ class SaxoCSV
 
     rows.each.with_index.map do |row, index|
       next if index.zero?
+
       next unless row[5] == "Trade"
 
       if row[6] == "Sell"
@@ -62,6 +63,8 @@ class SaxoTransaction < Hashie::Dash
   property :booked_amount_instrument_currency, required: true
 
   def self.sanitize_company_name(company_name)
+    matchdata = /.*\((.*)\)/.match(company_name)
+    return matchdata[1] unless matchdata.nil?
     company_name.gsub(/\(ISIN:.*/, "")
   end
 
@@ -79,7 +82,8 @@ class SaxoTransaction < Hashie::Dash
   end
 
   def to_transaction(listing)
-    sym = listing.symbol_for_company_name(self.class.sanitize_company_name(instrument))
+    sanitized_company_name = self.class.sanitize_company_name(instrument)
+    sym = listing.symbol_for_company_name(sanitized_company_name)
     Transaction.new(
       symbol: sym,
       trade_date: Date.strptime(trade_date, "%m/%d/%Y"),
