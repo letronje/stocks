@@ -14,18 +14,39 @@ class SaxoCSV
       next if index.zero?
       next unless row[5] == "Trade"
 
-      SaxoTransaction.from_csv_row(
-        [
-          row[0], # trade date
-          row[2], # asset type
-          row[3], # instrument
-          row[5], # transaction type
-          row[6], # event
-          row[9], # amount
-          row[10], # price
-          row[12], # booked_amount_instrument_currency,
-        ]
-      ).to_transaction(listing)
+      if row[6] == "Sell"
+        ap "Sell Trade found, skipping"
+        puts row.inspect
+        puts
+        next
+      end
+      if row[12] == "0"
+        ap "Buy Trade found with booked_amount_instrument_currency = 0, skipping"
+        puts row.inspect
+        puts
+        next
+      end
+
+      begin
+        saxo_row = SaxoTransaction.from_csv_row(
+          [
+            row[0], # trade date
+            row[2], # asset type
+            row[3], # instrument
+            row[5], # transaction type
+            row[6], # event
+            row[9], # amount
+            row[10], # price
+            row[12], # booked_amount_instrument_currency,
+          ]
+        )
+
+        saxo_row.to_transaction(listing)
+      rescue => e
+        puts row.inspect
+        puts saxo_row.inspect
+        raise e
+      end
     end.compact
   end
 end
@@ -61,7 +82,7 @@ class SaxoTransaction < Hashie::Dash
     sym = listing.symbol_for_company_name(self.class.sanitize_company_name(instrument))
     Transaction.new(
       symbol: sym,
-      trade_date: Date.parse(trade_date),
+      trade_date: Date.strptime(trade_date, "%m/%d/%Y"),
       type: trans_type,
       purchase_price: BigDecimal(price),
       quantity: amount.to_i,

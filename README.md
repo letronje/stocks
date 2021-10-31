@@ -2,7 +2,7 @@
 
 SAXO
 - https://www.saxoinvestor.com.sg/investor/transaction-report
-- Export -> Excel(xslx) -> CSV 
+- Export -> Excel(xslx) -> Open in "Numbers" on mac -> Export as CSV 
 
 How to Run:
 
