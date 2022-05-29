@@ -6,6 +6,8 @@ class SaxoCSV
     # TODO: if path is directory, import all csv files within
     return [] if path.blank?
 
+    puts "Processing #{path}"
+
     listing = Listing.new("data/US.json")
 
     rows = CSV.new(File.read(path)).read

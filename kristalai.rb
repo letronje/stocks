@@ -3,6 +3,8 @@ class KristalCSV
     # TODO: if path is directory, import all csv files within
     return [] if path.blank?
 
+    puts "Processing #{path}"
+
     rows = CSV.new(File.read(path)).read
 
     rows.each.with_index.map do |r, index|

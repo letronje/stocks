@@ -3,21 +3,33 @@ class TigerCSV
     # TODO: if path is directory, import all csv files within
     return [] if path.blank?
 
-    rows = CSV.new(File.read(path)).read
+    paths = if File.directory? path
+        (Dir.entries(path) - %w[. ..]).select { |p| p.include?(".csv") }.map { |p| File.join(path, p) }
+      else
+        [path]
+      end
 
-    header_row = ["", "Symbol", "Date/Time", "Quantity", "T.Price", "C.Price", "Proceeds", "Comm/Fee", "GST", "Realized P/L", "MTM P/L", "Code"]
-    start_index = rows.find_index header_row
+    paths.flat_map do |path|
+      puts "Processing #{path}"
 
-    last_index = start_index + rows[(start_index + 1)..-1].find_index do |row|
-      row[0..5] == ["", "Total", nil, nil, nil, nil]
+      rows = CSV.new(File.read(path)).read
+
+      header_row = ["", "Symbol", "Date/Time", "Quantity", "T.Price", "C.Price", "Proceeds", "Comm/Fee", "GST", "Realized P/L", "MTM P/L", "Code"]
+      start_index = rows.find_index header_row
+
+      next [] if start_index.nil?
+
+      last_index = start_index + rows[(start_index + 1)..-1].find_index do |row|
+        row[0..5] == ["", "Total", nil, nil, nil, nil]
+      end
+
+      rows[start_index..last_index].map do |row|
+        next if row[1] == "Symbol"
+        next if row[1].nil?
+        next if row[1].starts_with? "Total "
+        TigerTransaction.from_csv_row(row[1, 4]).to_transaction
+      end.compact
     end
-
-    rows[start_index..last_index].map do |row|
-      next if row[1] == "Symbol"
-      next if row[1].nil?
-      next if row[1].starts_with? "Total "
-      TigerTransaction.from_csv_row(row[1, 4]).to_transaction
-    end.compact
   end
 end
 

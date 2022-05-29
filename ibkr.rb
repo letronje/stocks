@@ -1,18 +1,26 @@
 class IbkrCSV
   def self.import(path)
-    # TODO: if path is directory, import all csv files within
     return [] if path.blank?
 
-    File.read(path).each_line.map do |line|
-      row = CSV.parse_line(line) rescue nil
-      next if row.nil?
+    paths = if File.directory? path
+        (Dir.entries(path) - %w[. ..]).map { |p| File.join(path, p) }
+      else
+        [path]
+      end
 
-      next unless row[0] == "Trades"
-      next unless row[3] == "Stocks"
-      next unless row[1] == "Data"
+    paths.flat_map do |path|
+      puts "Processing #{path}"
+      File.read(path).each_line.map do |line|
+        row = CSV.parse_line(line) rescue nil
+        next if row.nil?
 
-      IbkrTransaction.from_csv_row(row).to_transaction
-    end.compact
+        next unless row[0] == "Trades"
+        next unless row[3] == "Stocks"
+        next unless row[1] == "Data"
+
+        IbkrTransaction.from_csv_row(row).to_transaction
+      end.compact
+    end
   end
 end
 

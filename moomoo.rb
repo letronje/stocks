@@ -3,6 +3,8 @@ class MooMooCSV
     # TODO: if path is directory, import all csv files within
     return [] if path.blank?
 
+    puts "Processing #{path}"
+
     File.read(path).each_line.map do |line|
       row = CSV.parse_line(line) rescue nil
       next if row.nil?
